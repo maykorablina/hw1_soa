@@ -1,0 +1,68 @@
+specification {
+  element actor
+  element component
+  element database
+}
+
+model {
+  buyer = actor 'Покупатель' { description 'Оформляет заказы' }
+  seller = actor 'Продавец' { description 'Менеджит товары' }
+
+  gateway = component 'API Gateway' {
+  }
+
+  user_service = component 'User Service' {
+    description 'Регистрация/аутентификация, профили покупателей и продавцов'
+  }
+  user_db = database 'User DB (PostgreSQL)'
+
+  catalog_service = component 'Catalog Service' {
+    description 'Управление товарамии'
+  }
+  catalog_db = database 'Catalog DB (PostgreSQL)'
+
+  feed_service = component 'Feed Service' {
+    description 'Персонализированная лента: скоринг по истории покупок/просмотров'
+  }
+  feed_db = database 'Feed DB (PostgreSQL)'
+
+  order_service = component 'Order Service' {
+    description 'Жизненный цикл заказа: создание, резервирование, различные статусы'
+  }
+  order_db = database 'Order DB (PostgreSQL)'
+
+  payment_service = component 'Payment Service' {
+    description 'Инициирование платежа, интеграция с платежным шлюзом, транзакции'
+  }
+  payment_db = database 'Payment DB (PostgreSQL)'
+
+  notification_service = component 'Notification Service' {
+    description 'Уведомления о статусах заказов (email, push)'
+  }
+
+  buyer -> gateway 'HTTP/REST'
+  seller -> gateway 'HTTP/REST'
+
+  gateway -> user_service 'REST: /auth/*, /users/*'
+  gateway -> catalog_service 'REST: /catalog/*'
+  gateway -> feed_service 'REST: /feed/*'
+  gateway -> order_service 'REST: /orders/*'
+
+  user_service -> user_db 'Чтение / Запись'
+  catalog_service -> catalog_db 'Чтение / Запись'
+  feed_service -> feed_db 'Кэш ленты'
+  order_service -> order_db 'Чтение / Запись'
+  payment_service -> payment_db 'Запись транзакций'
+
+  order_service -> payment_service 'REST: инициировать платеж'
+  order_service -> notification_service 'REST: уведомить об изменении статуса'
+  payment_service -> notification_service 'REST: уведомить об оплате'
+}
+
+views {
+  view container_view {
+    title 'Marketplace Architecture'
+    include *
+    autoLayout TopBottom
+  }
+}
